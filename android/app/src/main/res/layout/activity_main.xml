@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:fillViewport="true"
+    android:fitsSystemWindows="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="24dp"
+        android:paddingTop="28dp"
+        android:paddingRight="24dp"
+        android:paddingBottom="32dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/app_name"
+            android:textColor="@color/text"
+            android:textSize="30sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Your Galaxy as a pen tablet for your PC"
+            android:textColor="@color/muted"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:background="@color/card"
+            android:padding="16dp"
+            android:textColor="@color/text"
+            android:textSize="15sp" />
+
+        <TextView
+            style="@style/Header"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="PCs on this Wi-Fi" />
+
+        <LinearLayout
+            android:id="@+id/pcList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+        <TextView
+            android:id="@+id/emptyHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:text="Searching… run SpenBridge.exe on your PC (same Wi-Fi)."
+            android:textColor="@color/muted"
+            android:textSize="14sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/ipInput"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="PC IP, e.g. 192.168.1.20"
+                android:imeOptions="actionGo"
+                android:inputType="text"
+                android:maxLines="1"
+                android:textColor="@color/text"
+                android:textColorHint="@color/muted" />
+
+            <Button
+                android:id="@+id/connectIp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Connect" />
+        </LinearLayout>
+
+        <TextView
+            style="@style/Header"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Settings" />
+
+        <Switch
+            android:id="@+id/swAspect"
+            style="@style/Toggle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Match monitor aspect ratio (no stretching)" />
+
+        <Switch
+            android:id="@+id/swLock"
+            style="@style/Toggle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Lock phone in tablet mode (exit = Volume Up ×3)" />
+
+        <Switch
+            android:id="@+id/swVolUndo"
+            style="@style/Toggle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Volume Down = Undo on PC (Ctrl+Z)" />
+
+        <Switch
+            android:id="@+id/swTrail"
+            style="@style/Toggle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Fading ink preview on the phone" />
+
+        <Button
+            android:id="@+id/start"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:layout_marginTop="24dp"
+            android:backgroundTint="@color/accent"
+            android:text="Start tablet mode"
+            android:textColor="#FF04121C"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:lineSpacingMultiplier="1.2"
+            android:text="Exit tablet mode: press Volume Up 3 times quickly.\nS Pen side button = pen barrel button (right-click in most apps).\nFingers are ignored, so you can rest your palm."
+            android:textColor="@color/muted"
+            android:textSize="13sp" />
+
+        <Button
+            android:id="@+id/releaseOwner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Remove kiosk device-owner mode"
+            android:visibility="gone" />
+    </LinearLayout>
+</ScrollView>

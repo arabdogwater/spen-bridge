@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- glass lens -->
+    <path
+        android:fillColor="#3338BDF8"
+        android:strokeColor="#FFBFE9FF"
+        android:strokeWidth="3.5"
+        android:pathData="M32,54a22,22 0,1 0,44 0a22,22 0,1 0,-44 0z" />
+    <!-- specular highlight -->
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M38.5,44.5a18,18 0,0 1,13 -8.4" />
+    <!-- pen point -->
+    <path
+        android:fillColor="#FF38BDF8"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.5"
+        android:pathData="M50,54a4,4 0,1 0,8 0a4,4 0,1 0,-8 0z" />
+</vector>

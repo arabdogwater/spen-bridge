@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">S Pen Bridge</string>
+    <string name="spen_actions_title">S Pen Bridge drawing shortcuts</string>
+    <string name="spen_undo">Undo on PC (Ctrl+Z)</string>
+    <string name="spen_redo">Redo on PC (Ctrl+Shift+Z)</string>
+    <string name="spen_brush_smaller">Smaller brush ([)</string>
+    <string name="spen_brush_bigger">Bigger brush (])</string>
+    <string name="spen_zoom_in">Zoom in (Ctrl+=)</string>
+    <string name="spen_zoom_out">Zoom out (Ctrl+-)</string>
+</resources>

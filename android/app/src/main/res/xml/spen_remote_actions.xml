@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- S Pen Air Actions (Samsung S Pen framework). Each action is delivered to
+     TabletActivity as an ordinary KeyEvent, which is forwarded to the PC. -->
+<remote-actions version="1.2" actionset_label="@string/spen_actions_title">
+    <action id="undo" label="@string/spen_undo" priority="1" trigger_key="CTRL_LEFT+Z">
+        <preference name="gesture" value="click" />
+        <preference name="button_only" value="true" />
+    </action>
+    <action id="redo" label="@string/spen_redo" priority="2" trigger_key="CTRL_LEFT+SHIFT_LEFT+Z">
+        <preference name="gesture" value="double_click" />
+        <preference name="button_only" value="true" />
+    </action>
+    <action id="brush_smaller" label="@string/spen_brush_smaller" priority="3" trigger_key="LEFT_BRACKET"
+        repeatable="true" repeatable_interval="short">
+        <preference name="gesture" value="swipe_left" />
+        <preference name="motion_only" value="true" />
+    </action>
+    <action id="brush_bigger" label="@string/spen_brush_bigger" priority="4" trigger_key="RIGHT_BRACKET"
+        repeatable="true" repeatable_interval="short">
+        <preference name="gesture" value="swipe_right" />
+        <preference name="motion_only" value="true" />
+    </action>
+    <action id="zoom_in" label="@string/spen_zoom_in" priority="5" trigger_key="CTRL_LEFT+EQUALS">
+        <preference name="gesture" value="swipe_up" />
+        <preference name="motion_only" value="true" />
+    </action>
+    <action id="zoom_out" label="@string/spen_zoom_out" priority="6" trigger_key="CTRL_LEFT+MINUS">
+        <preference name="gesture" value="swipe_down" />
+        <preference name="motion_only" value="true" />
+    </action>
+</remote-actions>

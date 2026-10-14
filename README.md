@@ -1,81 +1,130 @@
-# S Pen Bridge
+<p align="center">
+  <img src="docs/assets/banner.png" alt="S Pen Bridge" width="100%">
+</p>
 
-Use a Galaxy phone with an S Pen as a drawing tablet for a Windows PC over Wi-Fi.
+<p align="center">
+  <a href="https://github.com/arabdogwater/spen-bridge/releases/latest"><img src="https://img.shields.io/github/v/release/arabdogwater/spen-bridge?style=flat-square&color=38bdf8&label=release" alt="Release"></a>
+  <img src="https://img.shields.io/badge/Android-10%2B-3ddc84?style=flat-square&logo=android&logoColor=white" alt="Android 10+">
+  <img src="https://img.shields.io/badge/Windows-10%201809%2B-0078d4?style=flat-square&logo=windows&logoColor=white" alt="Windows 10 1809+">
+  <img src="https://img.shields.io/badge/PC%20app-240%20KB-8b5cf6?style=flat-square" alt="240 KB">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-64748b?style=flat-square" alt="MIT"></a>
+</p>
 
-- **Real Windows Ink pen**: pressure (1024 levels), tilt, S Pen side button as barrel button, eraser. Works in Photoshop, Krita, Clip Studio, Paint, OneNote and any app that takes pen input.
-- **Liquid-glass hover lens** on the PC: a refracting glass circle shows exactly where the tip will land before you touch. It is its own window, separate from the mouse cursor, and it never shows up in screenshots or recordings.
-- **Lockable tablet mode** on the phone: fullscreen, screen pinned, Back/Home/Recents blocked, fingers and palm ignored. Leave by pressing **Volume Up 3 times**.
-- **Light PC side**: one 240 KB native `.exe`, no install, no runtime, lives in the tray.
+<p align="center">
+  <b>Turn a Galaxy phone + S Pen into a real Windows Ink drawing tablet.</b><br>
+  Pressure, side button, eraser, a liquid-glass hover lens, and a lock mode so your palm can't escape the canvas.
+</p>
 
-## Install
+<p align="center">
+  <a href="https://github.com/arabdogwater/spen-bridge/releases/latest/download/SpenBridge.apk"><b>⬇ Phone app (.apk)</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/arabdogwater/spen-bridge/releases/latest/download/SpenBridge.exe"><b>⬇ PC app (.exe)</b></a>
+</p>
 
-| Where | File | How |
-|---|---|---|
-| PC | `dist/SpenBridge.exe` | Run it. A glass icon appears in the tray. Allow it on **Private networks** when Windows Firewall asks (or tray menu → *Allow through firewall*). |
-| Phone | `dist/SpenBridge.apk` | Copy to the phone and install it (allow "install unknown apps" for your file manager). |
+---
 
-Both devices must be on the same Wi-Fi. Open the app: your PC shows up by itself and connects. If it doesn't, type the PC's IP and press **Connect**. Then press **Start tablet mode**.
+<img src="docs/assets/setup.png" alt="Phone used as a drawing tablet for a PC over Wi-Fi" width="100%">
+
+## ✨ Features
+
+| | |
+|---|---|
+| 🖊️ **Real pen, not a fake mouse** | Injected as a native Windows Ink pen: 1024 pressure levels, tilt, S Pen side button as the barrel button, eraser. Works in Photoshop, Krita, Clip Studio Paint, OneNote, Paint and anything else that takes pen input. |
+| 🔮 **Liquid-glass hover lens** | While you hover, a refracting glass circle on the PC shows exactly where the tip will land. It's its own overlay, separate from your mouse cursor, and invisible to screenshots and screen recorders. |
+| 🔒 **Tablet lock mode** | Fullscreen, screen pinned, Back / Home / Recents blocked, fingers and palm ignored. Leave by pressing **Volume Up 3 times**. |
+| ⚡ **Low latency** | Unbuffered stylus events, every intermediate sample, UDP with Wi-Fi power save off and voice-priority packets. |
+| 📡 **Zero setup networking** | The phone finds the PC on the same Wi-Fi by itself. Manual IP if your router blocks broadcast. |
+| 🪶 **Tiny PC side** | One native 240 KB exe in the tray. No installer, no runtime, no drivers. |
+| 🎛️ **S Pen Air Actions** | Pen button click = undo, double click = redo, swipes = brush size and zoom (Bluetooth S Pens). |
+
+## 🔮 The lens
+
+Rendered live by the PC app over whatever is under the pen. The centre stays 1:1 so the pen point is exact; only the rim bends the content.
+
+<p align="center">
+  <img src="docs/assets/lens-states.png" alt="Lens states: hovering, drawing with pressure arc, refraction over UI" width="80%">
+</p>
+
+| Hovering | Drawing (arc = pressure) | Side button held | Eraser |
+|:---:|:---:|:---:|:---:|
+| ice blue | sky blue + pressure arc | amber | rose |
+
+## 🚀 Quick start
+
+1. **PC:** download [`SpenBridge.exe`](https://github.com/arabdogwater/spen-bridge/releases/latest/download/SpenBridge.exe) and run it. A glass icon shows up in the tray. Allow it on **Private networks** when Windows Firewall asks (or tray menu → *Allow through firewall*).
+2. **Phone:** install [`SpenBridge.apk`](https://github.com/arabdogwater/spen-bridge/releases/latest/download/SpenBridge.apk) (allow "install unknown apps" for your browser or file manager).
+3. Same Wi-Fi on both. Open the app, your PC appears and connects. Hit **Start tablet mode**.
 
 ### One-time phone settings
 
-1. **Pin app** (for the lock): Settings → Security and privacy → More security settings → **Pin app** → On. The first time you start tablet mode, confirm the pin prompt.
-2. **Stop Air Command from popping up** when you press the pen button while hovering: Settings → Advanced features → S Pen → Air command → turn off the pen-button shortcut (wording varies by One UI version).
-3. **S Pen Air Actions (optional, Bluetooth S Pens only)**: Settings → Advanced features → S Pen → Air actions → S Pen Bridge → enable. Then: click = Undo, double-click = Redo, swipe left/right = brush smaller/bigger (`[` `]`), swipe up/down = zoom in/out.
+- **Pin app** (needed for the lock): Settings → Security and privacy → More security settings → **Pin app** → on.
+- **Air Command:** turn off its pen-button shortcut (Settings → Advanced features → S Pen → Air command), otherwise pressing the button while hovering opens Samsung's menu.
+- **Air Actions** (optional): Settings → Advanced features → S Pen → Air actions → **S Pen Bridge** → on.
 
-## Using it
+## 🎮 Controls
 
-| Phone | PC |
+| On the phone | On the PC |
 |---|---|
-| Hover the pen | Glass lens follows; the mouse stays where it is |
-| Touch the screen | Pen down with pressure; the lens shrinks and a pressure arc lights up |
-| Hold the side button | Barrel button (right-click / app-specific); lens turns amber |
-| Volume Down | Undo (Ctrl+Z), can be switched off |
-| Volume Up ×3 (within 2 s) | Leaves tablet mode and unpins |
+| Hover | Glass lens follows; your mouse stays where it is |
+| Touch | Pen down with pressure |
+| Hold the side button | Barrel button (right-click / app-specific) |
+| Volume Down | Undo (Ctrl+Z), can be turned off |
+| Volume Up ×3 within 2 s | Exit tablet mode |
+| S Pen click / double click | Undo / Redo |
+| S Pen swipe left / right | Brush smaller / bigger (`[` / `]`) |
+| S Pen swipe up / down | Zoom in / out |
 
-Tray menu on the PC: pick the monitor to draw on, lens size, glass refraction on/off, **Send hover to apps** (turn on if you want apps like Krita to show their own brush outline while hovering; this moves the mouse while hovering), start with Windows.
+**PC tray menu:** choose which monitor to draw on, lens size, glass refraction on/off, *Send hover to apps* (lets Krita/Photoshop show their own brush outline, but moves the mouse while hovering), start with Windows.
 
-The phone letterboxes its drawing area to the monitor's aspect ratio so circles stay round. Switch that off in the app to use the whole phone screen.
+The phone's drawing area is letterboxed to your monitor's aspect ratio so circles stay round. Turn that off in the app to use the whole screen.
 
-## About the lock
+## 🔒 About the lock
 
-Without extra setup the lock is Android **screen pinning**: Home, Recents, notifications and Back are blocked, and the app exits on Volume Up ×3. Android itself still keeps one escape hatch: holding Back + Recents (or the swipe-up-and-hold gesture). That's deliberate and you can't trigger it by accident while drawing.
+By default the lock uses Android **screen pinning**: Home, Recents, notifications and Back are blocked, and only Volume Up ×3 exits. Android still keeps one system escape (hold Back + Recents, or swipe up and hold) that you won't hit by accident while drawing.
 
-If you want a true kiosk with no system escape at all, make the app device owner (only possible on a phone with **no accounts** signed in, e.g. a spare device):
+Want a true kiosk with no escape at all? Make the app device owner. This only works on a phone with **no accounts** signed in, e.g. a spare device:
 
 ```bash
 adb shell dpm set-device-owner com.spenbridge/.AdminReceiver
 ```
 
-Undo it from the app's main screen (**Remove kiosk device-owner mode**).
+Undo it from the app's main screen with **Remove kiosk device-owner mode**.
 
-## How it works
+## 🧠 How it works
 
 ```
-S Pen ─► PenView (unbuffered stylus events, history, pressure, tilt, buttons)
-       ─► UDP 47800, Wi-Fi low-latency lock, DSCP voice priority
-       ─► SpenBridge.exe ─► InjectSyntheticPointerInput (PT_PEN)  → apps
-                          └► layered glass lens window (excluded from capture)
+S Pen ─► PenView ─────────── unbuffered stylus events, history, pressure, tilt, buttons
+       ─► UDP :47800 ──────── Wi-Fi low-latency lock, DSCP voice priority, state-based packets
+       ─► SpenBridge.exe ─┬─► InjectSyntheticPointerInput (PT_PEN) ─► your drawing app
+                          └─► layered glass-lens window (excluded from capture)
 ```
 
-Wire format: [PROTOCOL.md](PROTOCOL.md).
+Every packet carries the full pen state, state changes are sent three times, and the PC lifts the pen if packets stop, so a dropped Wi-Fi packet can never leave a stroke stuck down. Wire format: [PROTOCOL.md](PROTOCOL.md).
 
-## Building
+## 🛠️ Building from source
 
 | Part | Command | Needs |
 |---|---|---|
 | PC | `pc\build.bat` | Visual Studio 2022 C++ build tools |
 | Android | `cd android && gradlew assembleRelease` | JDK 17, Android SDK 35 (`local.properties` → `sdk.dir`) |
 
-Test the PC side without a phone: `python tools/fake_phone.py` (hover only) or `--draw` (draws a spiral, open Paint first).
+Test the PC side without a phone:
 
-Preview the lens look: `SpenBridge.exe --snapshot out.bmp X Y [pressure]`.
+```bash
+python tools/fake_phone.py
+```
 
-## Troubleshooting
+Add `--draw` to draw a spiral (open Paint first, it's real pen input). Preview the lens: `SpenBridge.exe --snapshot out.bmp X Y [pressure]`.
+
+## 🩺 Troubleshooting
 
 | Problem | Fix |
 |---|---|
-| PC doesn't show up on the phone | Windows Firewall: tray → *Allow through firewall*. Some routers block broadcast ("AP/client isolation"): type the PC IP instead. |
-| Strokes land off from the lens | Fixed: injection now uses virtual-desktop coordinates, which matters when a monitor sits above or left of the primary. Update to the latest exe. |
-| Need to see what the pen injection is doing | Start the exe with `SPENBRIDGE_DEBUG=1` set; every injected event goes to `%APPDATA%\SpenBridge\log.txt` (failures are always logged). |
-| Lag spikes | Use 5 GHz Wi-Fi, keep the phone close to the router. The app already disables Wi-Fi power save while in tablet mode. |
-| Tray tooltip shows "Inject error" | Needs Windows 10 1809+. Run the exe as the same user that is signed in at the desktop. |
+| PC doesn't show up on the phone | Tray → *Allow through firewall*. Some routers block broadcast ("AP/client isolation"): type the PC's IP instead. |
+| Lag spikes | Use 5 GHz Wi-Fi and stay close to the router. The app already turns off Wi-Fi power save in tablet mode. |
+| Pen does nothing | Needs Windows 10 1809+. Check `%APPDATA%\SpenBridge\log.txt`; start the exe with `SPENBRIDGE_DEBUG=1` to log every pen event. |
+| Air Command pops up | Turn off its pen-button shortcut (see one-time settings). |
+
+## 📄 License
+
+[MIT](LICENSE)

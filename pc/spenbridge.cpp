@@ -562,7 +562,7 @@ static void renderLens(Dib& out, const Dib* bg, const RECT& valid, float R, floa
             // 1. soft drop shadow, slightly below the lens
             const float sdy = dy - R * 0.12f;
             const float sd = std::sqrt(dx * dx + sdy * sdy);
-            over(0, 0, 0, 0.26f * (1.f - smooth(R * 0.85f, R * 1.38f, sd)));
+            over(0, 0, 0, 0.17f * (1.f - smooth(R * 0.9f, R * 1.36f, sd)));
 
             // 2. the glass body
             const float cov = clampf(R - d + 0.5f, 0.f, 1.f);
@@ -593,24 +593,31 @@ static void renderLens(Dib& out, const Dib* bg, const RECT& valid, float R, floa
                     gr = 0.86f; gg = 0.93f; gb = 1.f;
                     ga = 0.07f + 0.12f * rn * rn;
                 }
-                // Fresnel rim + top-left specular + bottom-right inner bounce
-                const float rim = smooth(0.70f, 1.0f, rn);
+                // Fresnel rim + top-left specular crescent + bottom-right inner bounce
+                const float rim = smooth(0.62f, 1.0f, rn);
                 const float ndl = nx * Lx + ny * Ly;
-                const float spec = std::pow(std::max(0.f, ndl), 3.f) * rim * 0.85f;
-                const float bounce = std::pow(std::max(0.f, -ndl), 4.f) * rim * 0.40f;
-                const float lift = spec + bounce + rim * 0.07f;
+                const float band = smooth(0.74f, 0.88f, rn) * (1.f - smooth(0.95f, 1.0f, rn));
+                const float spec = std::pow(std::max(0.f, ndl), 2.2f) * band * 0.95f;
+                const float bounce = std::pow(std::max(0.f, -ndl), 3.f) * band * 0.45f;
+                // soft sheen across the upper half, like light lying on a curved surface
+                const float sheen = std::max(0.f, -dy / R) * (1.f - rn * rn) * 0.10f;
+                const float lift = clampf(spec + bounce + rim * 0.06f + sheen, 0.f, 1.f);
                 gr += (1 - gr) * lift; gg += (1 - gg) * lift; gb += (1 - gb) * lift;
                 if (!bg) ga = clampf(ga + lift * 0.9f, 0.f, 1.f);
-                // dark hairline on the very edge so the lens reads on white canvases
-                const float hd = (d - (R - 0.7f)) / 0.85f;
-                const float hair = std::exp(-hd * hd) * 0.32f;
+                // bright glass edge line, then a faint dark hairline just outside it so
+                // the lens reads on both white and black canvases
+                const float ed = (d - (R - 1.3f)) / 0.75f;
+                const float edge = std::exp(-ed * ed) * (0.45f + 0.35f * std::max(0.f, ndl));
+                gr += (1 - gr) * edge; gg += (1 - gg) * edge; gb += (1 - gb) * edge;
+                const float hd = (d - (R - 0.3f)) / 0.7f;
+                const float hair = std::exp(-hd * hd) * 0.22f;
                 gr *= 1 - hair; gg *= 1 - hair; gb *= 1 - hair;
-                if (!bg) ga = std::max(ga, hair);
+                if (!bg) ga = std::max(ga, std::max(hair, edge));
                 over(gr, gg, gb, ga * cov);
 
                 // accent ring inside the rim (glows when touching)
-                const float rd = std::fabs(d - (R - 2.2f));
-                over(accent.r, accent.g, accent.b, clampf(1.1f - rd, 0.f, 1.f) * ringA);
+                const float rd = std::fabs(d - (R - 2.6f));
+                over(accent.r, accent.g, accent.b, clampf(1.0f - rd, 0.f, 1.f) * ringA * 0.85f);
             }
 
             // 3. pressure arc around the lens while drawing
@@ -969,9 +976,64 @@ static LRESULT CALLBACK mainProc(HWND w, UINT m, WPARAM wp, LPARAM lp) {
     return DefWindowProcW(w, m, wp, lp);
 }
 
+// ----------------------------------------------------------------------------- snapshot (dev aid)
+
+// SpenBridge.exe --snapshot out.bmp X Y [pressure 0..1]
+// Renders the lens over the real screen at X,Y (4x zoom) so its look can be checked
+// even though the live lens is excluded from screenshots.
+static int snapshotMode(int argc, wchar_t** argv) {
+    if (argc < 5) return 2;
+    const int x = _wtoi(argv[3]), y = _wtoi(argv[4]);
+    const float pressure = argc > 5 ? (float)_wtof(argv[5]) : -1.f;
+    const bool contact = pressure >= 0;
+    const float baseR = lensRadius(x, y);
+    const int S = 2 * (int)std::ceil(baseR * 1.42f + 8.f);
+    Dib bg, out;
+    if (!bg.create(S, S) || !out.create(S, S)) return 1;
+    HDC sdc = GetDC(nullptr);
+    BitBlt(bg.dc, 0, 0, S, S, sdc, x - S / 2, y - S / 2, SRCCOPY);
+    ReleaseDC(nullptr, sdc);
+    RECT valid{0, 0, S, S};
+    LensStyle accent = contact ? LensStyle{0.22f, 0.74f, 0.97f} : LensStyle{0.62f, 0.86f, 1.0f};
+    renderLens(out, &bg, valid, baseR * (contact ? 0.86f : 1.f), contact ? 1.f : 0.f, std::max(0.f, pressure), accent, contact);
+
+    const int Z = 4, W = S * Z;
+    std::vector<uint8_t> pix((size_t)W * W * 3);
+    for (int yy = 0; yy < W; yy++)
+        for (int xx = 0; xx < W; xx++) {
+            uint32_t o = out.px[(yy / Z) * S + xx / Z], b = bg.px[(yy / Z) * S + xx / Z];
+            float a = (o >> 24) / 255.f;
+            uint8_t* p = &pix[((size_t)(W - 1 - yy) * W + xx) * 3]; // bottom-up BMP
+            for (int c = 0; c < 3; c++)
+                p[c] = (uint8_t)std::clamp((int)(((o >> (c * 8)) & 255) + ((b >> (c * 8)) & 255) * (1 - a)), 0, 255);
+        }
+    BITMAPFILEHEADER fh{};
+    BITMAPINFOHEADER ih{};
+    ih.biSize = sizeof(ih); ih.biWidth = W; ih.biHeight = W; ih.biPlanes = 1; ih.biBitCount = 24;
+    fh.bfType = 0x4D42;
+    fh.bfOffBits = sizeof(fh) + sizeof(ih);
+    fh.bfSize = fh.bfOffBits + (DWORD)pix.size();
+    FILE* f = _wfopen(argv[2], L"wb");
+    if (!f) return 1;
+    fwrite(&fh, sizeof(fh), 1, f);
+    fwrite(&ih, sizeof(ih), 1, f);
+    fwrite(pix.data(), 1, pix.size(), f);
+    fclose(f);
+    return 0;
+}
+
 // ----------------------------------------------------------------------------- main
 
 int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR, int) {
+    {
+        int argc = 0;
+        wchar_t** argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+        if (argc >= 2 && wcscmp(argv[1], L"--snapshot") == 0) {
+            SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+            loadConfig();
+            return snapshotMode(argc, argv);
+        }
+    }
     HANDLE single = CreateMutexW(nullptr, TRUE, L"Local\\SpenBridgeSingleInstance");
     if (GetLastError() == ERROR_ALREADY_EXISTS) {
         MessageBoxW(nullptr, L"S Pen Bridge is already running (see the tray).", L"S Pen Bridge", MB_ICONINFORMATION);

@@ -23,6 +23,7 @@ class MainActivity : Activity(), PenLink.Listener {
     private lateinit var emptyHint: TextView
     private lateinit var ipInput: EditText
     private var autoConnectTried = false
+    private var markedIp: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -131,6 +132,10 @@ class MainActivity : Activity(), PenLink.Listener {
             else -> "○ Not connected"
         }
         this.status.setTextColor(if (status.connected) Color.rgb(134, 239, 172) else Color.rgb(232, 238, 248))
-        onPcsChanged(PenLink.pcs)
+        // Re-draw the list only when the ✓ moves, not on every latency update.
+        if (pc?.ip != markedIp) {
+            markedIp = pc?.ip
+            onPcsChanged(PenLink.pcs)
+        }
     }
 }

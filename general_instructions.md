@@ -47,7 +47,9 @@ END CORE
 # PC
 
 ## Pen injection
-- `CreateSyntheticPointerDevice(PT_PEN, 1, POINTER_FEEDBACK_NONE)` + `InjectSyntheticPointerInput`, process is per-monitor DPI aware v2, coords are physical screen pixels.
+- `CreateSyntheticPointerDevice(PT_PEN, 1, POINTER_FEEDBACK_NONE)` + `InjectSyntheticPointerInput`, process is per-monitor DPI aware v2, physical pixels.
+- `ptPixelLocation` is relative to the VIRTUAL screen top-left, not screen coords: `toInjectSpace()` subtracts `SM_X/YVIRTUALSCREEN`. The dev PC has a monitor 211 px above the primary; without this every click landed 211 px above the lens.
+- Inject failures always go to `%APPDATA%\SpenBridge\log.txt`; `SPENBRIDGE_DEBUG=1` logs every inject.
 - Flag sequence: enter `INRANGE|UPDATE`, down `INRANGE|INCONTACT|DOWN`, move `INRANGE|INCONTACT|UPDATE`, lift `INRANGE|UP`, leave `UPDATE`. Tracked in `g_injRange/g_injContact` so invalid transitions never happen.
 - Default: hover is NOT injected (lens only, mouse stays free); tray "Send hover to apps" turns it on.
 - Watchdog (100 ms timer): lift if no PEN packet for 600 ms, drop client after 4 s.

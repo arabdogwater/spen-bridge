@@ -75,6 +75,7 @@ Preview the lens look: `SpenBridge.exe --snapshot out.bmp X Y [pressure]`.
 | Problem | Fix |
 |---|---|
 | PC doesn't show up on the phone | Windows Firewall: tray → *Allow through firewall*. Some routers block broadcast ("AP/client isolation"): type the PC IP instead. |
-| Strokes land in the wrong place on multi-monitor setups with monitors left of / above the primary | Set `virtual_origin=1` in `%APPDATA%\SpenBridge\spenbridge.ini` and restart. |
+| Strokes land off from the lens | Fixed: injection now uses virtual-desktop coordinates, which matters when a monitor sits above or left of the primary. Update to the latest exe. |
+| Need to see what the pen injection is doing | Start the exe with `SPENBRIDGE_DEBUG=1` set; every injected event goes to `%APPDATA%\SpenBridge\log.txt` (failures are always logged). |
 | Lag spikes | Use 5 GHz Wi-Fi, keep the phone close to the router. The app already disables Wi-Fi power save while in tablet mode. |
 | Tray tooltip shows "Inject error" | Needs Windows 10 1809+. Run the exe as the same user that is signed in at the desktop. |

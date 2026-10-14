@@ -73,7 +73,6 @@ struct Config {
     bool hoverInject = false;// false: hover only moves the glass lens, mouse stays put
     bool lens = true;        // live refraction of what's under the lens
     int size = 1;            // 0 small, 1 medium, 2 large
-    bool virtualOrigin = false; // inject coords relative to virtual-screen origin
 };
 
 static Config g_cfg;
@@ -92,7 +91,6 @@ static void loadConfig() {
     g_cfg.hoverInject = GetPrivateProfileIntW(L"bridge", L"hover_inject", 0, f) != 0;
     g_cfg.lens = GetPrivateProfileIntW(L"bridge", L"lens", 1, f) != 0;
     g_cfg.size = std::clamp((int)GetPrivateProfileIntW(L"bridge", L"size", 1, f), 0, 2);
-    g_cfg.virtualOrigin = GetPrivateProfileIntW(L"bridge", L"virtual_origin", 0, f) != 0;
 }
 
 static void saveConfig() {
@@ -102,7 +100,6 @@ static void saveConfig() {
     put(L"hover_inject", g_cfg.hoverInject);
     put(L"lens", g_cfg.lens);
     put(L"size", g_cfg.size);
-    put(L"virtual_origin", g_cfg.virtualOrigin);
 }
 
 // ----------------------------------------------------------------------------- monitors
@@ -195,14 +192,31 @@ static void inject(POINTER_FLAGS flags, POINT pt, UINT32 pressure, INT32 tx, INT
     p.pressure = pressure;
     p.tiltX = tx;
     p.tiltY = ty;
-    if (!InjectSyntheticPointerInput(g_pen, &info, 1)) g_lastInjectError = GetLastError();
+    const BOOL ok = InjectSyntheticPointerInput(g_pen, &info, 1);
+    static const bool verbose = GetEnvironmentVariableW(L"SPENBRIDGE_DEBUG", nullptr, 0) > 0;
+    if (!ok || verbose) {
+        const DWORD err = ok ? 0 : GetLastError();
+        if (!ok) g_lastInjectError = err;
+        // Failures (or everything, with SPENBRIDGE_DEBUG set) go to %APPDATA%\SpenBridge\log.txt.
+        static int logged = 0;
+        if ((verbose || logged < 20) && !g_iniPath.empty()) {
+            logged++;
+            std::wstring path = g_iniPath.substr(0, g_iniPath.find_last_of(L'\\')) + L"\\log.txt";
+            if (FILE* f = _wfopen(path.c_str(), L"a")) {
+                fprintf(f, "inject %s: flags=0x%X pt=(%ld,%ld) pressure=%u err=%lu\n", ok ? "ok" : "FAILED",
+                        (unsigned)flags, pt.x, pt.y, pressure, err);
+                fclose(f);
+            }
+        }
+    }
 }
 
+// InjectSyntheticPointerInput takes ptPixelLocation relative to the top-left of the
+// VIRTUAL screen, not screen coordinates. With a monitor above or left of the primary
+// the virtual origin is negative, so skipping this shifts every stroke up/left.
 static POINT toInjectSpace(POINT p) {
-    if (g_cfg.virtualOrigin) {
-        p.x -= GetSystemMetrics(SM_XVIRTUALSCREEN);
-        p.y -= GetSystemMetrics(SM_YVIRTUALSCREEN);
-    }
+    p.x -= GetSystemMetrics(SM_XVIRTUALSCREEN);
+    p.y -= GetSystemMetrics(SM_YVIRTUALSCREEN);
     return p;
 }
 

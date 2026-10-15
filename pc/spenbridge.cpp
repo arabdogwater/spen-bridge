@@ -47,11 +47,12 @@
 static const uint16_t kPort = 47800;
 enum : uint8_t { T_DISCOVER = 1, T_OFFER, T_HELLO, T_WELCOME, T_PEN, T_PING, T_PONG, T_KEY, T_BYE };
 enum : uint8_t { F_IN_RANGE = 1, F_CONTACT = 2, F_BARREL = 4, F_ERASER = 8 };
+enum : uint16_t { X_DISTANCE_VALID = 1 }; // sample extra flags (offset 14)
 static const int kSampleSize = 16;
 
 struct Sample {
     uint8_t flags;
-    uint8_t distance;
+    float distance; // 0 = touching .. 1 = edge of hover range, -1 = unknown
     float pressure; // 0..1
     float x, y;     // 0..1 inside the phone's active area
     int tiltX, tiltY;
@@ -145,6 +146,7 @@ struct Hover {
     int x = 0, y = 0;
     bool contact = false, barrel = false, eraser = false;
     float pressure = 0;
+    float distance = -1; // normalised hover height, -1 = phone doesn't report it
 };
 static std::mutex g_hoverMx;
 static Hover g_hover;
@@ -426,7 +428,9 @@ static void handlePacket(const char* d, int n, const sockaddr_in& from) {
         for (int i = 0; i < count; i++, p += kSampleSize) {
             uint16_t pr;
             s.flags = (uint8_t)p[0];
-            s.distance = (uint8_t)p[1];
+            uint16_t extra;
+            memcpy(&extra, p + 14, 2);
+            s.distance = (extra & X_DISTANCE_VALID) ? (uint8_t)p[1] / 255.f : -1.f;
             memcpy(&pr, p + 2, 2);
             memcpy(&s.x, p + 4, 4);
             memcpy(&s.y, p + 8, 4);
@@ -444,6 +448,7 @@ static void handlePacket(const char* d, int n, const sockaddr_in& from) {
         h.barrel = (s.flags & F_BARREL) != 0;
         h.eraser = (s.flags & F_ERASER) != 0;
         h.pressure = s.pressure;
+        h.distance = s.distance;
         publishHover(h);
         break;
     }
@@ -663,6 +668,19 @@ static HDC g_screenDC;
 static bool g_overlayShown = false;
 static bool g_canExclude = false;
 static float g_contactAnim = 0.f;
+static float g_scale = -1.f; // smoothed lens size multiplier
+
+// Lens size vs pen height: small near the glass, big at the edge of hover range.
+static const float kNearScale = 0.72f, kFarScale = 1.75f;
+static const float kMaxScale = kFarScale;
+
+static float lensScale(float distance, bool contact) {
+    if (distance < 0.f) return contact ? 0.86f : 1.f; // phone doesn't report hover height
+    if (contact) return kNearScale * 0.9f;
+    // Ease-out so the first millimetres above the screen change size the most.
+    const float d = 1.f - (1.f - distance) * (1.f - distance);
+    return kNearScale + (kFarScale - kNearScale) * d;
+}
 static Hover g_drawn;
 static const UINT_PTR kAnimTimer = 1;
 
@@ -690,6 +708,7 @@ static void drawOverlay() {
     }
     if (!h.visible) {
         g_contactAnim = 0;
+        g_scale = -1.f;
         hideOverlay();
         return;
     }
@@ -698,8 +717,10 @@ static void drawOverlay() {
     if (std::fabs(g_contactAnim - (h.contact ? 1.f : 0.f)) < 0.01f) g_contactAnim = h.contact ? 1.f : 0.f;
 
     const float baseR = lensRadius(h.x, h.y);
-    const float R = baseR * (1.f - 0.14f * g_contactAnim);
-    const int S = 2 * (int)std::ceil(baseR * 1.42f + 8.f);
+    const float target = lensScale(h.distance, h.contact);
+    g_scale = g_scale < 0.f ? target : g_scale + (target - g_scale) * 0.32f;
+    const float R = baseR * g_scale;
+    const int S = 2 * (int)std::ceil(baseR * kMaxScale * 1.42f + 8.f);
     if (g_out.w != S && (!g_out.create(S, S) || !g_bg.create(S, S))) return;
 
     const int x0 = h.x - S / 2, y0 = h.y - S / 2;
@@ -992,16 +1013,17 @@ static LRESULT CALLBACK mainProc(HWND w, UINT m, WPARAM wp, LPARAM lp) {
 
 // ----------------------------------------------------------------------------- snapshot (dev aid)
 
-// SpenBridge.exe --snapshot out.bmp X Y [pressure 0..1]
+// SpenBridge.exe --snapshot out.bmp X Y [pressure 0..1, or -1 = hovering] [hover height 0..1]
 // Renders the lens over the real screen at X,Y (4x zoom) so its look can be checked
 // even though the live lens is excluded from screenshots.
 static int snapshotMode(int argc, wchar_t** argv) {
     if (argc < 5) return 2;
     const int x = _wtoi(argv[3]), y = _wtoi(argv[4]);
     const float pressure = argc > 5 ? (float)_wtof(argv[5]) : -1.f;
+    const float height = argc > 6 ? (float)_wtof(argv[6]) : -1.f;
     const bool contact = pressure >= 0;
     const float baseR = lensRadius(x, y);
-    const int S = 2 * (int)std::ceil(baseR * 1.42f + 8.f);
+    const int S = 2 * (int)std::ceil(baseR * kMaxScale * 1.42f + 8.f);
     Dib bg, out;
     if (!bg.create(S, S) || !out.create(S, S)) return 1;
     HDC sdc = GetDC(nullptr);
@@ -1009,7 +1031,7 @@ static int snapshotMode(int argc, wchar_t** argv) {
     ReleaseDC(nullptr, sdc);
     RECT valid{0, 0, S, S};
     LensStyle accent = contact ? LensStyle{0.22f, 0.74f, 0.97f} : LensStyle{0.62f, 0.86f, 1.0f};
-    renderLens(out, &bg, valid, baseR * (contact ? 0.86f : 1.f), contact ? 1.f : 0.f, std::max(0.f, pressure), accent, contact);
+    renderLens(out, &bg, valid, baseR * lensScale(height, contact), contact ? 1.f : 0.f, std::max(0.f, pressure), accent, contact);
 
     const int Z = 4, W = S * Z;
     std::vector<uint8_t> pix((size_t)W * W * 3);

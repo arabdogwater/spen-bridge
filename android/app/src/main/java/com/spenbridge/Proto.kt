@@ -20,6 +20,9 @@ object Proto {
     const val F_BARREL = 4
     const val F_ERASER = 8
 
+    // Sample extra flags (u16 at offset 14).
+    const val X_DISTANCE_VALID = 1
+
     const val HEADER_SIZE = 4
     const val SAMPLE_SIZE = 16
     const val MAX_SAMPLES = 48

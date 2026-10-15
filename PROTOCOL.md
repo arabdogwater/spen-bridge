@@ -29,13 +29,13 @@ WELCOME is also re-sent by the PC whenever the target monitor changes, so the ph
 | Offset | Type | Field |
 |---|---|---|
 | 0 | u8 | flags: `1` in range, `2` contact, `4` barrel (S Pen side button), `8` eraser |
-| 1 | u8 | hover distance (raw `AXIS_DISTANCE`, clamped 0..255) |
+| 1 | u8 | hover height, normalised: 0 = touching, 255 = edge of hover range (only meaningful if extra bit 1 is set) |
 | 2 | u16 | pressure, 0..65535 |
 | 4 | f32 | x, 0..1 inside the active area |
 | 8 | f32 | y, 0..1 inside the active area |
 | 12 | i8 | tiltX, degrees (-90..90, + = right) |
 | 13 | i8 | tiltY, degrees (-90..90, + = toward the user) |
-| 14 | u16 | reserved |
+| 14 | u16 | extra flags: `1` hover height valid (the phone reports `AXIS_DISTANCE`) |
 
 ## Reliability rules
 

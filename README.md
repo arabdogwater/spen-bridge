@@ -45,6 +45,8 @@ Rendered live by the PC app over whatever is under the pen. The centre stays 1:1
   <img src="docs/assets/lens-states.png" alt="Lens states: hovering, drawing with pressure arc, refraction over UI" width="80%">
 </p>
 
+**The lens reacts to pen height.** High above the screen it's big; as the S Pen comes down it shrinks toward the exact point, and it's smallest while touching. This uses Android's hover-distance axis (`AXIS_DISTANCE`), normalised per device. If a phone doesn't report hover height the lens just stays a fixed size; the phone shows `hover depth ✓` in tablet mode when it works.
+
 | Hovering | Drawing (arc = pressure) | Side button held | Eraser |
 |:---:|:---:|:---:|:---:|
 | ice blue | sky blue + pressure arc | amber | rose |

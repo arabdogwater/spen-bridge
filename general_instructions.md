@@ -31,6 +31,7 @@ END CORE
 - Side button = `BUTTON_STYLUS_PRIMARY | BUTTON_STYLUS_SECONDARY | BUTTON_SECONDARY` (Samsung varies) → barrel flag.
 - Tilt: Android `AXIS_TILT` + `AXIS_ORIENTATION` → Windows tiltX/tiltY via atan2 (Chromium-style). Most Galaxy phones report no tilt.
 - `onResolvePointerIcon` returns `TYPE_NULL` to hide Samsung's hover pointer.
+- Hover height: `AXIS_DISTANCE` normalised 0..1 using `InputDevice.getMotionRange(AXIS_DISTANCE)`, or the max seen if no range is declared; sent as u8 + extra flag `X_DISTANCE_VALID`. PC `lensScale()` maps it to 0.72x (near) .. 1.75x (far) with ease-out and 0.32 smoothing per frame; unknown height = fixed size.
 
 ## Lock / kiosk
 - `TabletActivity.enterLock()` → `startLockTask()` = screen pinning (user must enable "Pin app"). If device owner (`AdminReceiver`), sets lock-task packages + `LOCK_TASK_FEATURE_NONE` = hard kiosk.

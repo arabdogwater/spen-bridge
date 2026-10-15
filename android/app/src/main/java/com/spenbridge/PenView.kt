@@ -52,6 +52,16 @@ class PenView(context: Context, private val prefs: Prefs) : View(context) {
     private var lastFlagsSent = 0
     private val exitRunnable = Runnable { sendOutOfRange() }
 
+    // ---- hover distance (AXIS_DISTANCE): range differs per device, so normalise it ----
+    private var distDeviceId = Int.MIN_VALUE
+    private var distMin = 0f
+    private var distMax = 0f
+    private var distFromRange = false
+    private var distMaxSeen = 0f
+    var distanceSupported = false
+        private set
+    private var hoverDist = -1f
+
     // ---- banner (e.g. "press 2 more times to exit") ----
     private var banner = ""
     private var bannerUntil = 0L
@@ -213,6 +223,7 @@ class PenView(context: Context, private val prefs: Prefs) : View(context) {
         if (barrel) flags = flags or Proto.F_BARREL
         if (eraser) flags = flags or Proto.F_ERASER
 
+        resolveDistanceRange(e)
         packBuf.clear()
         var n = 0
         val hist = if (includeHistory) min(e.historySize, Proto.MAX_SAMPLES - 1) else 0
@@ -262,13 +273,41 @@ class PenView(context: Context, private val prefs: Prefs) : View(context) {
         val tx = Math.toDegrees(atan2(sin(orientation) * r, z).toDouble()).roundToInt().coerceIn(-90, 90)
         val ty = Math.toDegrees(atan2(-cos(orientation) * r, z).toDouble()).roundToInt().coerceIn(-90, 90)
         packBuf.put(flags.toByte())
-        packBuf.put(distance.coerceIn(0f, 255f).toInt().toByte())
+        val dn = normDistance(distance, (flags and Proto.F_CONTACT) != 0)
+        hoverDist = dn
+        packBuf.put(if (dn < 0f) 0 else (dn * 255f).roundToInt().coerceIn(0, 255).toByte())
         packBuf.putShort((p * 65535f).toInt().toShort())
         packBuf.putFloat(nx)
         packBuf.putFloat(ny)
         packBuf.put(tx.toByte())
         packBuf.put(ty.toByte())
-        packBuf.putShort(0)
+        packBuf.putShort(if (dn >= 0f) Proto.X_DISTANCE_VALID.toShort() else 0)
+    }
+
+    /** Reads the stylus' AXIS_DISTANCE range from its InputDevice once per device. */
+    private fun resolveDistanceRange(e: MotionEvent) {
+        if (e.deviceId == distDeviceId) return
+        distDeviceId = e.deviceId
+        distMaxSeen = 0f
+        val r = e.device?.getMotionRange(MotionEvent.AXIS_DISTANCE, e.source)
+        distFromRange = r != null && r.max > r.min
+        if (r != null) {
+            distMin = r.min
+            distMax = r.max
+        }
+    }
+
+    /** 0 = touching, 1 = edge of hover range, -1 = device doesn't report distance. */
+    private fun normDistance(raw: Float, contact: Boolean): Float {
+        if (contact) return if (distanceSupported) 0f else -1f
+        if (raw > distMaxSeen) distMaxSeen = raw
+        val n = when {
+            distFromRange -> (raw - distMin) / (distMax - distMin)
+            distMaxSeen > 0f -> raw / distMaxSeen // no declared range: learn it from what we see
+            else -> return -1f
+        }
+        distanceSupported = true
+        return n.coerceIn(0f, 1f)
     }
 
     private fun sendOutOfRange() {
@@ -331,7 +370,8 @@ class PenView(context: Context, private val prefs: Prefs) : View(context) {
         drawCorners(canvas)
 
         val pad = 14f * density
-        canvas.drawText(statusLine, area.left + pad, area.top + pad + textPaint.textSize, textPaint)
+        val status = if (distanceSupported) "$statusLine · hover depth ✓" else statusLine
+        canvas.drawText(status, area.left + pad, area.top + pad + textPaint.textSize, textPaint)
         val hint = "Volume Up ×3 to exit"
         canvas.drawText(hint, area.right - pad - textPaint.measureText(hint), area.bottom - pad, textPaint)
 
@@ -382,7 +422,11 @@ class PenView(context: Context, private val prefs: Prefs) : View(context) {
     }
 
     private fun drawHoverLens(c: Canvas) {
-        val r = (if (penDown) 9f else 13f) * density
+        val r = when {
+            penDown -> 9f
+            hoverDist >= 0f -> 9f + 14f * hoverDist // grows as the pen lifts away
+            else -> 13f
+        } * density
         val x = hoverPos.x
         val y = hoverPos.y
         ringFill.shader = RadialGradient(
